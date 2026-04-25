@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mô phỏng Thế Ngược (Back Substitution)</title>
+
+    <!-- Tích hợp TailwindCSS qua CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Khai báo Import Map để trình duyệt hiểu được các module import (react, lucide-react, v.v.) -->
+    <script type="importmap">
+    {
+        "imports": {
+            "react": "https://esm.sh/react@18.2.0",
+            "react-dom/client": "https://esm.sh/react-dom@18.2.0/client",
+            "lucide-react": "https://esm.sh/lucide-react@0.292.0"
+        }
+    }
+    </script>
+
+    <!-- Tích hợp Babel Standalone để biên dịch JSX sang JS trực tiếp trên trình duyệt -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <style>
+        body {
+            margin: 0;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #334155;
+            border-radius: 10px;
+        }
+
+        @keyframes fade-in {
+            from {
+                opacity: 0;
+                transform: translateY(5px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .animate-in {
+            animation: fade-in 0.3s ease-out forwards;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="root"></div>
+
+    <!-- Đoạn mã React của bạn sử dụng data-type="module" để hỗ trợ esm imports (import module) -->
+    <script type="text/babel" data-type="module">
+        import React, { useState, useEffect, useRef } from 'react';
+        import { createRoot } from 'react-dom/client';
+        import { Play, SkipForward, RotateCcw, StepForward, Info, CheckCircle2 } from 'lucide-react';
+
+        const App = () => {
+            const [n, setN] = useState(3);
+            const [matrix, setMatrix] = useState([
+                [2, 1, -1, 8],
+                [0, 3, 2, 11],
+                [0, 0, 5, 10]
+            ]);
+            const [results, setResults] = useState(new Array(3).fill(null));
+            const [step, setStep] = useState({ i: -1, j: -1, phase: 'START', s: 0 });
+            const [logs, setLogs] = useState([]);
+            const [isPlaying, setIsPlaying] = useState(false);
+            const timerRef = useRef(null);
+            const eps = 1e-6;
+
+            // Khởi tạo lại dữ liệu khi thay đổi kích thước n
+            const handleNChange = (val) => {
+                const newN = parseInt(val);
+                setN(newN);
+                const newMatrix = Array.from({ length: newN }, (_, i) =>
+                    Array.from({ length: newN + 1 }, (_, j) => (i <= j ? Math.floor(Math.random() * 10) + 1 : 0))
+                );
+                for (let i = 0; i < newN; i++) {
+                    for (let j = 0; j < i; j++) newMatrix[i][j] = 0;
+                }
+                setMatrix(newMatrix);
+                resetSim(newN);
+            };
+
+            const handleMatrixChange = (r, c, val) => {
+                const newMatrix = [...matrix];
+                newMatrix[r][c] = parseFloat(val) || 0;
+                setMatrix(newMatrix);
+                resetSim();
+            };
+
+            const resetSim = (currentN = n) => {
+                setResults(new Array(currentN).fill(null));
+                setStep({ i: currentN - 1, j: -1, phase: 'ROW_START', s: 0 });
+                setLogs(["Hệ thống sẵn sàng. Bắt đầu tính từ ẩn cuối cùng (x" + currentN + ")."]);
+                setIsPlaying(false);
+                if (timerRef.current) clearInterval(timerRef.current);
+            };
+
+            const nextStep = () => {
+                setStep((prev) => {
+                    const { i, j, phase, s } = prev;
+                    let newLogs = [...logs];
+
+                    if (phase === 'ROW_START') {
+                        if (i < 0) return { ...prev, phase: 'FINISHED' };
+                        const currentS = matrix[i][n];
+                        newLogs.push(`Bước ${n - i}: Tính x${i + 1}. Khởi tạo giá trị tổng s=a[${i}][${n}]=${currentS}`);
+                        if (Math.abs(matrix[i][i]) < eps) {
+                            newLogs.push(`⚠️ Hệ số a[${i}][${i}] quá nhỏ. Gán x${i + 1}=0.`);
+                            const newRes = [...results]; newRes[i] = 0;
+                            setResults(newRes);
+                            setLogs(newLogs);
+                            return { i: i - 1, j: -1, phase: 'ROW_START', s: 0 };
+                        }
+                        setLogs(newLogs);
+                        return { i, j: i + 1, phase: 'SUMMING', s: currentS };
+                    }
+
+                    if (phase === 'SUMMING') {
+                        if (j < n) {
+                            const val = matrix[i][j] * (results[j] || 0);
+                            const newS = s - val;
+                            newLogs.push(`  → Cập nhật s: ${s.toFixed(2)} - (a[${i}][${j}] * x${j + 1})=${s.toFixed(2)} - (${matrix[i][j]} * ${results[j]})=${newS.toFixed(3)}`);
+                            setLogs(newLogs);
+                            return { i, j: j + 1, phase: 'SUMMING', s: newS };
+                        } else {
+                            const finalX = s / matrix[i][i];
+                            newLogs.push(`  ✅ Kết quả: x${i + 1}=s / a[${i}][${i}]=${s.toFixed(3)} / ${matrix[i][i]}=${finalX.toFixed(3)}`);
+                            const newRes = [...results];
+                            newRes[i] = parseFloat(finalX.toFixed(4));
+                            setResults(newRes);
+                            setLogs(newLogs);
+                            return { i: i - 1, j: -1, phase: 'ROW_START', s: 0 };
+                        }
+                    }
+
+                    if (phase === 'FINISHED') { setIsPlaying(false); return prev; }
+                    return prev;
+                });
+            };
+
+            useEffect(() => {
+                if (isPlaying) {
+                    timerRef.current = setInterval(() => {
+                        nextStep();
+                    }, 1200);
+                } else {
+                    clearInterval(timerRef.current);
+                }
+                return () => clearInterval(timerRef.current);
+            }, [isPlaying, step, results]);
+
+            return (
+                <div className="min-h-screen bg-slate-100 p-4 md:p-8 font-sans text-slate-900">
+                    <div className="max-w-6xl mx-auto space-y-6">
+
+                        {/* Header */}
+                        <div className="bg-white rounded-2xl shadow-md p-6 border-l-8 border-indigo-600">
+                            <h1 className="text-3xl font-black text-slate-800 flex items-center gap-3">
+                                <StepForward className="text-indigo-600" size={32} />
+                                Mô phỏng Thế Ngược (Back Substitution)
+                            </h1>
+                            <p className="text-slate-500 mt-2 text-lg">Giải hệ phương trình từ ma trận tam giác trên với ký hiệu s đại diện cho tổng tích lũy.</p>
+                        </div>
+
+                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+
+                            <div className="lg:col-span-2 space-y-6">
+                                {/* Matrix Card */}
+                                <div className="bg-white rounded-2xl shadow-sm p-6 border border-slate-200">
+                                    <div className="flex flex-col sm:flex-row items-center justify-between mb-8 gap-4">
+                                        <div className="flex items-center gap-4 bg-slate-50 p-2 rounded-xl border border-slate-200">
+                                            <span className="font-bold px-2">Số ẩn:</span>
+                                            <div className="flex gap-1">
+                                                {[2, 3, 4, 5].map(v => (
+                                                    <button key={v} onClick={() => handleNChange(v)}
+                                                        className={`w-10 h-10 rounded-lg font-bold transition-all ${n === v ?
+                                                            'bg-indigo-600 text-white' : 'bg-white hover:bg-slate-200 text-slate-600'}`}
+                                                    >
+                                                        {v}
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        </div>
+
+                                        <div className="flex gap-2 w-full sm:w-auto">
+                                            <button onClick={() => resetSim()} className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-slate-200 hover:bg-slate-300 rounded-xl font-bold transition-all">
+                                                <RotateCcw size={18} /> Đặt lại
+                                            </button>
+                                            <button onClick={() => setIsPlaying(!isPlaying)} className={`flex-1 flex items-center justify-center gap-2 px-6 py-2 rounded-xl font-bold text-white shadow-lg transition-all ${isPlaying ? 'bg-amber-500 hover:bg-amber-600' : 'bg-indigo-600 hover:bg-indigo-700'}`}>
+                                                {isPlaying ? 'Dừng' : 'Chạy tự động'}
+                                            </button>
+                                            <button onClick={nextStep} disabled={step.phase === 'FINISHED' || isPlaying} className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white rounded-xl font-bold shadow-lg transition-all">
+                                                Bước tiếp
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <div className="overflow-x-auto">
+                                        <table className="w-full border-separate border-spacing-3">
+                                            <thead>
+                                                <tr>
+                                                    {Array.from({ length: n }).map((_, i) => (
+                                                        <th key={i} className="text-center text-slate-400 font-mono text-sm uppercase">Cột x{i + 1}</th>
+                                                    ))}
+                                                    <th className="w-4"></th>
+                                                    <th className="text-center text-indigo-400 font-mono text-sm uppercase">Vế phải (s)</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {matrix.map((row, r) => (
+                                                    <tr key={r}>
+                                                        {row.map((cell, c) => (
+                                                            <React.Fragment key={c}>
+                                                                {c === n && <td className="text-center font-bold text-slate-300 text-2xl">|</td>}
+                                                                <td>
+                                                                    <input type="number" value={cell} onChange={(e) => handleMatrixChange(r, c, e.target.value)}
+                                                                        className={`w-full text-center p-3 rounded-xl border-2 font-mono text-lg transition-all ${step.i === r && step.j === c ? 'border-amber-400 bg-amber-50 ring-4 ring-amber-100 shadow-inner' :
+                                                                            step.i === r ? 'border-indigo-200 bg-indigo-50/50' : 'border-slate-100 focus:border-indigo-400'
+                                                                            }`}
+                                                                    />
+                                                                </td>
+                                                            </React.Fragment>
+                                                        ))}
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+
+                                {/* Expanded Formula Card */}
+                                <div className="bg-gradient-to-br from-slate-900 to-indigo-900 rounded-2xl shadow-xl p-8 text-white">
+                                    <div className="flex items-center gap-3 mb-6 border-b border-white/10 pb-4">
+                                        <div className="p-2 bg-indigo-500 rounded-lg">
+                                            <Info size={24} />
+                                        </div>
+                                        <h3 className="text-xl font-bold uppercase tracking-wide text-indigo-100">Chi tiết Công thức Thế ngược (Ký hiệu s)</h3>
+                                    </div>
+
+                                    <div className="grid md:grid-cols-2 gap-8">
+                                        <div className="space-y-6">
+                                            <div>
+                                                <p className="text-indigo-300 text-sm font-bold mb-2 uppercase tracking-tighter">Công thức tổng quát:</p>
+                                                <div className="bg-white/10 p-6 rounded-2xl border border-white/10 text-center shadow-inner">
+                                                    <div className="text-3xl font-mono tracking-widest text-indigo-200">
+                                                        x<sub>i</sub> = s<sub>i</sub> / a<sub>ii</sub>
+                                                    </div>
+                                                    <div className="mt-2 text-sm text-slate-400 italic">
+                                                        Trong đó s<sub>i</sub> là tổng tích lũy:
+                                                    </div>
+                                                    <div className="text-xl font-mono text-indigo-300 mt-2">
+                                                        s<sub>i</sub> = a[i][n] - ∑ a<sub>ij</sub>x<sub>j</sub>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div className="space-y-4">
+                                                <p className="text-indigo-300 text-sm font-bold uppercase tracking-tighter">Giải nghĩa thành phần:</p>
+                                                <ul className="space-y-3">
+                                                    <li className="flex items-start gap-3">
+                                                        <div className="w-6 h-6 bg-indigo-500/20 rounded flex items-center justify-center shrink-0 text-indigo-300 font-bold">x<sub>i</sub></div>
+                                                        <p className="text-slate-300 text-sm">Ẩn số đang cần tìm tại hàng i.</p>
+                                                    </li>
+                                                    <li className="flex items-start gap-3">
+                                                        <div className="w-6 h-6 bg-indigo-500/20 rounded flex items-center justify-center shrink-0 text-indigo-300 font-bold">s<sub>i</sub></div>
+                                                        <p className="text-slate-300 text-sm">Biến tổng tích lũy (khởi tạo bằng giá trị vế phải a[i][n]).</p>
+                                                    </li>
+                                                    <li className="flex items-start gap-3">
+                                                        <div className="w-6 h-6 bg-indigo-500/20 rounded flex items-center justify-center shrink-0 text-indigo-300 font-bold">∑</div>
+                                                        <p className="text-slate-300 text-sm">Tổng các tích (hệ số × nghiệm đã giải) được trừ dần vào s.</p>
+                                                    </li>
+                                                    <li className="flex items-start gap-3">
+                                                        <div className="w-6 h-6 bg-indigo-500/20 rounded flex items-center justify-center shrink-0 text-indigo-300 font-bold">a<sub>ii</sub></div>
+                                                        <p className="text-slate-300 text-sm">Hệ số trên đường chéo chính của ẩn x<sub>i</sub>.</p>
+                                                    </li>
+                                                </ul>
+                                            </div>
+                                        </div>
+
+                                        <div className="bg-black/20 p-6 rounded-2xl border border-white/5 space-y-4">
+                                            <p className="text-indigo-300 text-sm font-bold uppercase tracking-tighter">Các bước thực hiện (theo code):</p>
+                                            <div className="space-y-4 text-sm">
+                                                <div className="flex gap-3">
+                                                    <span className="text-indigo-400 font-black italic">B1.</span>
+                                                    <p>Gán giá trị khởi đầu cho s bằng vế phải: <code className="text-indigo-300">s = a[i][n]</code>.</p>
+                                                </div>
+                                                <div className="flex gap-3">
+                                                    <span className="text-indigo-400 font-black italic">B2.</span>
+                                                    <p>Sử dụng vòng lặp trừ đi các ẩn đã biết: <code className="text-indigo-300">s = s - a[i][j]*x[j]</code>.</p>
+                                                </div>
+                                                <div className="flex gap-3">
+                                                    <span className="text-indigo-400 font-black italic">B3.</span>
+                                                    <p>Tìm nghiệm cuối cùng bằng phép chia: <code className="text-indigo-300">x[i] = s / a[i][i]</code>.</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Sidebar */}
+                            <div className="space-y-6">
+                                <div className="bg-white rounded-2xl shadow-sm p-6 border border-slate-200">
+                                    <h3 className="font-black text-slate-800 mb-6 flex items-center gap-2">
+                                        <CheckCircle2 className="text-emerald-500" /> Bảng nghiệm số
+                                    </h3>
+                                    <div className="space-y-3">
+                                        {results.map((res, idx) => (
+                                            <div key={idx} className={`flex items-center justify-between p-4 rounded-xl border-2 transition-all ${res !== null ? 'border-emerald-500 bg-emerald-50' : 'border-slate-100 bg-slate-50 opacity-60'}`}>
+                                                <span className="font-mono font-bold text-slate-500">Ẩn x{idx + 1}</span>
+                                                <span className={`text-xl font-mono font-black ${res !== null ? 'text-emerald-700' : 'text-slate-300'}`}>
+                                                    {res !== null ? res : '—'}
+                                                </span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                <div className="bg-slate-900 rounded-2xl shadow-2xl p-6 text-slate-300 font-mono text-sm h-[400px] flex flex-col border-t-4 border-indigo-500">
+                                    <div className="flex items-center gap-2 mb-4 border-b border-slate-800 pb-2 text-[10px] text-slate-500 font-bold tracking-widest">
+                                        <div className="w-2 h-2 rounded-full bg-red-500"></div>
+                                        <div className="w-2 h-2 rounded-full bg-amber-500"></div>
+                                        <div className="w-2 h-2 rounded-full bg-emerald-500"></div>
+                                        CONSOLE LOGS
+                                    </div>
+                                    <div className="flex-1 overflow-y-auto space-y-2 custom-scrollbar">
+                                        {logs.map((log, idx) => (
+                                            <div key={idx} className={`animate-in fade-in slide-in-from-left-1 duration-200 ${log.includes('✅') ? 'text-emerald-400 font-bold bg-emerald-400/5 p-1 rounded' : ''}`}>
+                                                <span className="text-slate-600 mr-2">{idx + 1}.</span> {log}
+                                            </div>
+                                        ))}
+                                        {step.phase === 'FINISHED' && (
+                                            <div className="bg-indigo-500/20 text-indigo-300 p-3 rounded-lg mt-4 border border-indigo-500/30 text-center font-bold">
+                                                [HOÀN THÀNH THẾ NGƯỢC]
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        const root = createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+
+</html>
