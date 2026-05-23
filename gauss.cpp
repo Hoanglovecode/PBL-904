@@ -87,24 +87,34 @@ void inmatran(double a[][MAXN+1],int n){
 }
 void gauss(double a[][MAXN+1],int n){
     for(int i=0;i<n-1;i++){
+        cout<<"=============================\n";
+        cout<<"BUOC "<<i+1<<":\n";
         int pivot=i;
         for(int k=i+1;k<n;k++){
             if(fabs(a[k][i])>fabs(a[pivot][i])){
                 pivot=k;
             }
         }
-        if(fabs(a[pivot][i])<EPS) continue;
+        if(fabs(a[pivot][i])<EPS){
+            cout<<"Cot "<<i+1<<" toan 0 -> bo qua\n";
+            continue;
+        }
         if(pivot!=i){
-            doidong(a,n,i,pivot);
             cout<<"Da doi dong "<<i+1<<" voi dong "<<pivot+1<<endl;
+            doidong(a,n,i,pivot);
+            cout<<"Ma tran sau khi doi dong:\n";
+            inmatran(a,n);
         }
         for(int j=i+1;j<n;j++){
             double factor=a[j][i]/a[i][i];
+            cout<<"R"<<j+1<<" = R"<<j+1
+                <<" - ("<<factor<<") * R"<<i+1<<endl;
             for(int k=i;k<=n;k++){
                 a[j][k]-=factor*a[i][k];
             }
+            cout<<"Ma tran sau khi khu dong "<<j+1<<":\n";
+            inmatran(a,n);
         }
-        inmatran(a,n);
     }
 }
 int check(double a[][MAXN+1],int n){
