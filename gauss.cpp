@@ -107,8 +107,11 @@ void gauss(double a[][MAXN+1],int n){
         }
         for(int j=i+1;j<n;j++){
             double factor=a[j][i]/a[i][i];
-            cout<<"R"<<j+1<<" = R"<<j+1
-                <<" - ("<<factor<<") * R"<<i+1<<endl;
+            cout<<"factor = a["<<j+1<<"]["<<i+1<<"] / a["<<i+1<<"]["<<i+1<<"] = "
+                <<a[j][i]<<" / "<<a[i][i]
+                <<" = "<<factor<<endl;
+            cout<<"Dong"<<j+1<<" = Dong"<<j+1
+                <<" - ("<<factor<<") * Dong"<<i+1<<endl;
             for(int k=i;k<=n;k++){
                 a[j][k]-=factor*a[i][k];
             }
@@ -197,7 +200,7 @@ void giaiTuBanPhim(){
     cout<<"Nhap ma tran mo rong:\n";
     for(int i=0;i<n;i++){
         for(int j=0;j<=n;j++){
-            cout<<"a["<<i<<"]["<<j<<"] = ";
+            cout<<"a["<<i+1<<"]["<<j+1<<"] = ";
             cin>>a[i][j];
         }
     }
