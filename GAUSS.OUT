@@ -1,6 +1,39 @@
-x1= 2.000
-x2= 3.000
-x3= -1.000
+Nghiem cua he:
+x1 = 2.000000
+x2 = 3.000000
+x3 = -1.000000
 
-Hệ vô nghiệm
+He vo nghiem
+Nghiem cua he:
+x1 = 0.400000
+x2 = 1.700000
+x3 = 0.900000
 
+He vo so nghiem
+Nghiem cua he:
+x1 = 1.038462
+x2 = 0.730769
+x3 = 1.846154
+
+Nghiem cua he:
+x1 = 1.920707
+x2 = 0.566732
+x3 = -0.216815
+
+Nghiem cua he:
+x1 = 5.000000
+x2 = -3.000000
+x3 = 2.000000
+
+He vo so nghiem
+He vo so nghiem
+Loi: '.' khong phai so hop le tai dong 1, cot 2
+Loi: 'a' khong phai so hop le tai dong 1, cot 3
+Loi: '#' khong phai so hop le tai dong 2, cot 2
+Loi: '++' khong phai so hop le tai dong 1, cot 2
+Loi: '5..2' khong phai so hop le tai dong 1, cot 3
+Loi: So phuong trinh phai nam trong khoang 1 -> 10
+Loi: So phuong trinh phai nam trong khoang 1 -> 10
+Loi: Dong 1 phai co 4 gia tri
+Loi: '1e309' khong phai so hop le tai dong 1, cot 1
+He vo so nghiem
