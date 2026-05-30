@@ -76,7 +76,8 @@ void doidong(double a[][MAXN+1],int n,int r1,int r2){
     }
 }
 void inmatran(double a[][MAXN+1],int n){
-    cout<<"\nMa tran hien tai:\n";
+    cout<<"\n               -----Ma tran hien tai-----\n";
+    cout<<"\n";
     for(int i=0;i<n;i++){
         for(int j=0;j<=n;j++){
             cout<<setw(12)<<fixed<<setprecision(3)<<a[i][j];
@@ -88,7 +89,7 @@ void inmatran(double a[][MAXN+1],int n){
 void gauss(double a[][MAXN+1],int n){
     for(int i=0;i<n-1;i++){
         cout<<"=============================\n";
-        cout<<"BUOC "<<i+1<<":\n";
+        cout<<"BUOC "<<i+1<<": ";
         int pivot=i;
         for(int k=i+1;k<n;k++){
             if(fabs(a[k][i])>fabs(a[pivot][i])){
@@ -102,20 +103,24 @@ void gauss(double a[][MAXN+1],int n){
         if(pivot!=i){
             cout<<"Da doi dong "<<i+1<<" voi dong "<<pivot+1<<endl;
             doidong(a,n,i,pivot);
-            cout<<"Ma tran sau khi doi dong:\n";
+            cout<<" - Ma tran sau khi doi dong:\n";
             inmatran(a,n);
         }
         for(int j=i+1;j<n;j++){
             double factor=a[j][i]/a[i][i];
-            cout<<"factor = a["<<j+1<<"]["<<i+1<<"] / a["<<i+1<<"]["<<i+1<<"] = "
+            cout<<" Ap dung cong thuc : factor = a["<<j+1<<"]["<<i+1<<"] / a["<<i+1<<"]["<<i+1<<"] = "
                 <<a[j][i]<<" / "<<a[i][i]
                 <<" = "<<factor<<endl;
-            cout<<"Dong"<<j+1<<" = Dong"<<j+1
+            cout<<"\n";
+            cout<<"=> Dong"<<j+1<<" = Dong"<<j+1
+                <<" - factor * Dong"<<i+1<<endl;
+            cout<<"         = Dong"<<j+1
                 <<" - ("<<factor<<") * Dong"<<i+1<<endl;
+            cout<<"\n";
             for(int k=i;k<=n;k++){
                 a[j][k]-=factor*a[i][k];
             }
-            cout<<"Ma tran sau khi khu dong "<<j+1<<":\n";
+            cout<<" - Ma tran sau khi khu dong "<<j+1<<":\n";
             inmatran(a,n);
         }
     }
@@ -190,7 +195,6 @@ void giaiHe(double a[][MAXN+1],int n,ofstream &out){
         xuat(out,x,n);
     }
 }
-
 void giaiTuBanPhim(){
     ofstream out("GAUSS.OUT");
     int n;
@@ -207,7 +211,6 @@ void giaiTuBanPhim(){
     giaiHe(a,n,out);
     out.close();
 }
-
 void giaiTuFile(){
     ifstream inp("GAUSS.INP");
     ofstream out("GAUSS.OUT");
@@ -233,7 +236,6 @@ void giaiTuFile(){
     inp.close();
     out.close();
 }
-
 int main() {
     char choice;
     do {
@@ -248,7 +250,6 @@ int main() {
         cout << "Lua chon cua ban (a/b/q): ";
         cin >> choice;
         choice = tolower(choice); // chap nhan ca chu hoa A/B/Q
- 
         switch (choice) {
             case 'a':
                 giaiTuBanPhim();
@@ -262,12 +263,10 @@ int main() {
             default:
                 cout << "Lua chon khong hop le! Vui long nhap a, b hoac q.\n";
         }
- 
         if (choice != 'q') {
             system("pause");
         }
     } while (choice != 'q');
- 
     return 0;
 }
 /*
