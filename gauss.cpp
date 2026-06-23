@@ -70,11 +70,6 @@ bool readMatrix(ifstream &inp,ofstream &out,double a[][MAXN+1],int n){
     }
     return true;
 }
-void doidong(double a[][MAXN+1],int n,int r1,int r2){
-    for(int j=0;j<=n;j++){
-        swap(a[r1][j],a[r2][j]);
-    }
-}
 void inmatran(double a[][MAXN+1],int n){
     cout<<"\n               -----Ma tran hien tai-----\n";
     cout<<"\n";
@@ -85,6 +80,18 @@ void inmatran(double a[][MAXN+1],int n){
         cout<<endl;
     }
     cout<<endl;
+}
+void xuat(ofstream &out,double x[],int n){
+    out<<fixed<<setprecision(6);
+    for(int i=0;i<n;i++){
+        out<<"x"<<i+1<<" = "<<x[i]<<endl;
+    }
+    out<<endl;
+}
+void doidong(double a[][MAXN+1],int n,int r1,int r2){
+    for(int j=0;j<=n;j++){
+        swap(a[r1][j],a[r2][j]);
+    }
 }
 void gauss(double a[][MAXN+1],int n){
     for(int i=0;i<n-1;i++){
@@ -125,6 +132,19 @@ void gauss(double a[][MAXN+1],int n){
         }
     }
 }
+void thenguoc(double a[][MAXN+1],double x[],int n){
+    for(int i=n-1;i>=0;i--){
+        if(fabs(a[i][i])<EPS){
+            x[i]=0;
+            continue;
+        }
+        double sum=a[i][n];
+        for(int j=i+1;j<n;j++){
+            sum-=a[i][j]*x[j];
+        }
+        x[i]=sum/a[i][i];
+    }
+}
 int check(double a[][MAXN+1],int n){
     int rankA=0;
     int rankAug=0;
@@ -149,26 +169,6 @@ int check(double a[][MAXN+1],int n){
     if(rankA<rankAug) return -1;
     if(rankA<n) return 0;
     return 1;
-}
-void thenguoc(double a[][MAXN+1],double x[],int n){
-    for(int i=n-1;i>=0;i--){
-        if(fabs(a[i][i])<EPS){
-            x[i]=0;
-            continue;
-        }
-        double sum=a[i][n];
-        for(int j=i+1;j<n;j++){
-            sum-=a[i][j]*x[j];
-        }
-        x[i]=sum/a[i][i];
-    }
-}
-void xuat(ofstream &out,double x[],int n){
-    out<<fixed<<setprecision(6);
-    for(int i=0;i<n;i++){
-        out<<"x"<<i+1<<" = "<<x[i]<<endl;
-    }
-    out<<endl;
 }
 void giaiHe(double a[][MAXN+1],int n,ofstream &out){
     double x[MAXN];
