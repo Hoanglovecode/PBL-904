@@ -7,6 +7,10 @@
             "args": [
                 "-fdiagnostics-color=always",
                 "-g",
+                "-Wextra",
+                "-Wno-sign-compare",
+                "-Wno-sign-conversion",
+                "-Wno-conversion",
                 "${file}",
                 "-o",
                 "${fileDirname}\\${fileBasenameNoExtension}.exe"

@@ -5,10 +5,10 @@
 #include<string>
 #include<sstream>
 #include<cmath>
-#include <cctype>//them de dung tolower()
+#include <cctype>
 using namespace std;
 const int MAXN=10;
-const double EPS=1e-9;
+const double EPS=1e-3;
 bool isValidNumber(const string &s){
     if(s.empty()) return false;
     stringstream ss(s);
@@ -43,7 +43,6 @@ bool readMatrix(ifstream &inp,ofstream &out,double a[][MAXN+1],int n){
             return false;
         }
         while(line.empty()){
-            //Đọc tiếp các dòng sau cho đến khi gặp một dòng không rỗng.
             if(!getline(inp,line)){
                 return false;
             }
